@@ -2,7 +2,7 @@
 
 Aplicação React para gerenciamento de agenda e pacientes, integrada com API REST.
 
-## 🚀 Configuração
+##  Configuração
 
 ### 1. Instalar dependências
 
@@ -26,7 +26,7 @@ VITE_API_URL=http://localhost:3000/api
 npm run dev
 ```
 
-## 📋 Pré-requisitos
+##  Pré-requisitos
 
 Antes de iniciar a aplicação, certifique-se de que a API REST está rodando:
 
@@ -36,7 +36,7 @@ Antes de iniciar a aplicação, certifique-se de que a API REST está rodando:
 
 A API deve estar disponível em `http://localhost:3000`
 
-## 🔗 Integração com API
+##  Integração com API
 
 A aplicação está integrada com a API REST localizada em `../api-rest-node`. 
 
@@ -49,12 +49,12 @@ A aplicação está integrada com a API REST localizada em `../api-rest-node`.
 
 ### Funcionalidades integradas:
 
-- ✅ **Agenda**: Carregar, criar, atualizar e deletar eventos via API
-- ✅ **Pacientes**: Carregar, criar, atualizar e deletar pacientes via API
-- ✅ **Drag & Drop**: Atualização automática na API ao mover eventos
-- ✅ **Status**: Atualização de status de eventos via API
+-  **Agenda**: Carregar, criar, atualizar e deletar eventos via API
+-  **Pacientes**: Carregar, criar, atualizar e deletar pacientes via API
+-  **Drag & Drop**: Atualização automática na API ao mover eventos
+-  **Status**: Atualização de status de eventos via API
 
-## 📁 Estrutura
+##  Estrutura
 
 ```
 src/
@@ -69,14 +69,14 @@ src/
     └── api.js
 ```
 
-## 🛠️ Scripts
+##  Scripts
 
 - `npm run dev` - Inicia servidor de desenvolvimento
 - `npm run build` - Cria build de produção
 - `npm run preview` - Preview do build de produção
 - `npm run lint` - Executa o linter
 
-## 📌 Notas
+##  Notas
 
 - A aplicação substituiu o uso de `localStorage` por chamadas à API REST
 - Todos os dados são persistidos no banco SQLite da API
