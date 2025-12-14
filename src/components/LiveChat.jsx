@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { chatService } from '../services/chatService';
 import { 
   ChatBubbleLeftRightIcon, 
   XMarkIcon, 
@@ -147,14 +148,17 @@ export const LiveChat = () => {
     setSelectedContact(null);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim() || !selectedContact) return;
 
     const contactId = selectedContact.id;
+    const userText = inputValue;
+
+    // Adiciona a mensagem do usuário na UI imediatamente
     const newMessage = {
-      id: (conversations[contactId]?.length || 0) + 1,
+      id: Date.now(),
       type: 'sent',
-      text: inputValue,
+      text: userText,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -162,24 +166,68 @@ export const LiveChat = () => {
       ...prev,
       [contactId]: [...(prev[contactId] || []), newMessage]
     }));
+    
     setInputValue('');
     setIsTyping(true);
 
-    // Simular resposta
-    setTimeout(() => {
-      setIsTyping(false);
-      const responseText = AUTO_RESPONSES[contactId](inputValue);
+    if (!selectedContact.isBot) {
+        setTimeout(() => {
+            setIsTyping(false);
+            const botResponse = {
+                id: Date.now() + 1,
+                type: 'received',
+                text: 'Olá! Um atendente humano responderá em breve.',
+                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            };
+            setConversations(prev => ({
+                ...prev,
+                [contactId]: [...(prev[contactId] || []), botResponse]
+            }));
+        }, 1000);
+        return;
+    }
+
+    // Lógica do ChatBot
+    try {
+      // Prepara o histórico para enviar ao backend
+      // O backend espera: [{ role: 'user', content: '...' }, { role: 'assistant', content: '...' }]
+      const currentHistory = conversations[contactId] || [];
+      const historyPayload = currentHistory.map(msg => ({
+        role: msg.type === 'sent' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
+      // Chama o backend
+      const data = await chatService.sendMessage(userText, historyPayload);
+
+      // Adiciona a resposta da IA na UI
       const botResponse = {
-        id: (conversations[contactId]?.length || 0) + 2,
+        id: Date.now() + 1,
         type: 'received',
-        text: responseText,
+        text: data.reply,
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       };
+
       setConversations(prev => ({
         ...prev,
         [contactId]: [...(prev[contactId] || []), botResponse]
       }));
-    }, 1500);
+
+    } catch (error) {
+      // Tratamento de erro na UI
+      const errorResponse = {
+        id: Date.now() + 1,
+        type: 'received',
+        text: 'Desculpe, estou com problemas de conexão no momento.',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+      setConversations(prev => ({
+        ...prev,
+        [contactId]: [...(prev[contactId] || []), errorResponse]
+      }));
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e) => {
