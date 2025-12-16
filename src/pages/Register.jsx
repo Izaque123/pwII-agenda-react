@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { getInitialRoute } from '../utils/routeUtils';
 import { Eye, EyeOff, Mail, Lock, User, KeyRound, ArrowLeft } from 'lucide-react';
 
 export const RegisterPage = () => {
@@ -134,14 +135,15 @@ export const RegisterPage = () => {
     if (!validateCadastroForm()) return;
 
     try {
-      await register({
+      const userData = await register({
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha
       });
       
-      // Redirecionar para a agenda após registro bem-sucedido
-      navigate('/agenda');
+      // Redirecionar para a rota inicial baseada no role do usuário
+      const initialRoute = getInitialRoute(userData?.role);
+      navigate(initialRoute);
     } catch (error) {
       console.error('Erro no registro:', error);
     }
@@ -153,9 +155,10 @@ export const RegisterPage = () => {
     if (!validateSenhaForm()) return;
 
     try {
-      await definirSenha(senhaForm.email, senhaForm.senha);
-      // Redirecionar para a agenda após definir senha e fazer login
-      navigate('/agenda');
+      const userData = await definirSenha(senhaForm.email, senhaForm.senha);
+      // Redirecionar para a rota inicial baseada no role do usuário
+      const initialRoute = getInitialRoute(userData?.role);
+      navigate(initialRoute);
     } catch (error) {
       console.error('Erro ao definir senha:', error);
     }
@@ -169,8 +172,6 @@ export const RegisterPage = () => {
             to="/login"
             className="flex items-center gap-2 text-white/90 dark:text-white/80 hover:text-white transition-colors"
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm font-medium">Voltar ao login</span>
           </Link>
           <ThemeToggle />
         </div>

@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { mensagensService } from '../services/mensagensService';
+import { suporteUsuariosService } from '../services/suporteUsuariosService';
 import { 
   ChatBubbleLeftRightIcon, 
   XMarkIcon, 
@@ -10,8 +13,8 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline';
 
-// Dados dos contatos
-const CONTACTS = [
+// Dados dos contatos base
+const BASE_CONTACTS = [
   {
     id: 'bot',
     name: 'Assistente EsMile',
@@ -20,16 +23,6 @@ const CONTACTS = [
     role: 'Suporte Automático',
     lastMessage: 'Como posso ajudar?',
     isBot: true
-  },
-  {
-    id: 'suporte-team',
-    name: 'Izaque, Iago',
-    avatarType: 'team',
-    status: 'online',
-    role: 'Time de Suporte',
-    lastMessage: 'Olá! Como posso te ajudar?',
-    isTeam: true,
-    members: ['Izaque', 'Iago']
   }
 ];
 
@@ -101,13 +94,75 @@ const AUTO_RESPONSES = {
 
 export const LiveChat = () => {
   const { isDark } = useTheme();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [conversations, setConversations] = useState({});
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1); // Começa com 1 para chamar atenção
+  const [contacts, setContacts] = useState(BASE_CONTACTS);
+  const [loadingSuporte, setLoadingSuporte] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Carregar suporte atribuído ao usuário
+  useEffect(() => {
+    const loadSuporte = async () => {
+      if (!user || (user.role !== 'user' && user.tipo !== 'usuario')) {
+        return;
+      }
+
+      try {
+        setLoadingSuporte(true);
+        const suportes = await suporteUsuariosService.getSuportesPorUsuario(user.id);
+        
+        if (suportes && suportes.length > 0) {
+          const suporte = suportes[0]; // Pega o primeiro suporte atribuído
+          const suporteContact = {
+            id: 'suporte-team',
+            name: suporte.nome || 'Suporte',
+            avatarType: 'team',
+            status: suporte.ativo ? 'online' : 'offline',
+            role: 'Time de Suporte',
+            lastMessage: 'Olá! Como posso te ajudar?',
+            isTeam: true,
+            suporteId: suporte.id
+          };
+          
+          setContacts([...BASE_CONTACTS, suporteContact]);
+        } else {
+          // Se não houver suporte atribuído, ainda mostra a opção genérica
+          const suporteContact = {
+            id: 'suporte-team',
+            name: 'Suporte',
+            avatarType: 'team',
+            status: 'online',
+            role: 'Time de Suporte',
+            lastMessage: 'Olá! Como posso te ajudar?',
+            isTeam: true
+          };
+          setContacts([...BASE_CONTACTS, suporteContact]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar suporte:', error);
+        // Em caso de erro, mantém o contato genérico
+        const suporteContact = {
+          id: 'suporte-team',
+          name: 'Suporte',
+          avatarType: 'team',
+          status: 'online',
+          role: 'Time de Suporte',
+          lastMessage: 'Olá! Como posso te ajudar?',
+          isTeam: true
+        };
+        setContacts([...BASE_CONTACTS, suporteContact]);
+      } finally {
+        setLoadingSuporte(false);
+      }
+    };
+
+    loadSuporte();
+  }, [user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,10 +175,12 @@ export const LiveChat = () => {
   // Inicializa conversa com mensagem de boas-vindas
   const initConversation = (contactId) => {
     if (!conversations[contactId]) {
-      const contact = CONTACTS.find(c => c.id === contactId);
+      const contact = contacts.find(c => c.id === contactId);
+      if (!contact) return;
+      
       const welcomeMessage = contact.isBot 
         ? 'Olá! Sou o assistente virtual do EsMile. Como posso ajudar você hoje?'
-        : `Olá! Você está conversando com o time de suporte do EsMile. Como posso ajudar?`;
+        : `Olá! Você está conversando com ${contact.name || 'o time de suporte'} do EsMile. Como posso ajudar?`;
       
       setConversations(prev => ({
         ...prev,
@@ -147,14 +204,15 @@ export const LiveChat = () => {
     setSelectedContact(null);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim() || !selectedContact) return;
 
     const contactId = selectedContact.id;
+    const messageText = inputValue.trim();
     const newMessage = {
       id: (conversations[contactId]?.length || 0) + 1,
       type: 'sent',
-      text: inputValue,
+      text: messageText,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -165,10 +223,20 @@ export const LiveChat = () => {
     setInputValue('');
     setIsTyping(true);
 
+    // Se for mensagem para suporte, salvar no banco
+    if (contactId === 'suporte-team' && user) {
+      try {
+        await mensagensService.enviarMensagem(messageText);
+      } catch (error) {
+        console.error('Erro ao enviar mensagem para suporte:', error);
+        // Não interromper o fluxo, apenas logar o erro
+      }
+    }
+
     // Simular resposta
     setTimeout(() => {
       setIsTyping(false);
-      const responseText = AUTO_RESPONSES[contactId](inputValue);
+      const responseText = AUTO_RESPONSES[contactId](messageText);
       const botResponse = {
         id: (conversations[contactId]?.length || 0) + 2,
         type: 'received',
@@ -354,7 +422,12 @@ export const LiveChat = () => {
         ) : (
           /* Contact List */
           <div className={`h-[560px] overflow-y-auto chat-scrollbar ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            {CONTACTS.map((contact) => (
+            {loadingSuporte ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              contacts.map((contact) => (
               <button
                 key={contact.id}
                 onClick={() => handleSelectContact(contact)}
@@ -389,7 +462,8 @@ export const LiveChat = () => {
                 </div>
                 <ChevronRightIcon className={`w-5 h-5 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
               </button>
-            ))}
+              ))
+            )}
             
             {/* Info Footer */}
             <div className={`px-4 py-6 text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>

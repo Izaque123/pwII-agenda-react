@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getInitialRoute } from '../../utils/routeUtils';
 import { Eye, EyeOff, Mail, Lock, UserCheck } from 'lucide-react';
 
 export const LoginForm = () => {
@@ -54,9 +55,10 @@ export const LoginForm = () => {
     if (!validateForm()) return;
 
     try {
-      await login(formData);
-      // Redirecionar para a agenda após login bem-sucedido
-      navigate('/agenda');
+      const userData = await login(formData);
+      // Redirecionar para a rota inicial baseada no role do usuário
+      const initialRoute = getInitialRoute(userData?.role);
+      navigate(initialRoute);
     } catch (error) {
       console.error('Erro no login:', error);
       // Se o erro for de senha não definida, redirecionar para página de cadastro

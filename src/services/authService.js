@@ -57,5 +57,53 @@ export const authService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Registrar novo usuário de suporte
+  registerSuporte: async (userData) => {
+    try {
+      const response = await api.post(`${API_ENDPOINTS.auth}/register-suporte`, userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Listar todos os usuários (apenas admin)
+  getAllUsers: async (filters = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.role) queryParams.append('role', filters.role);
+      if (filters.ativo !== undefined) queryParams.append('ativo', filters.ativo);
+      if (filters.busca) queryParams.append('busca', filters.busca);
+      
+      const queryString = queryParams.toString();
+      const url = `${API_ENDPOINTS.auth}/usuarios${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Atualizar usuário (apenas admin)
+  updateUser: async (id, userData) => {
+    try {
+      const response = await api.put(`${API_ENDPOINTS.auth}/usuarios/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Deletar usuário (apenas admin)
+  deleteUser: async (id) => {
+    try {
+      const response = await api.delete(`${API_ENDPOINTS.auth}/usuarios/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };

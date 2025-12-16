@@ -5,16 +5,18 @@ import { RoleButtons } from '../components/Login/RoleButtons';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { LiveChat } from '../components/LiveChat';
 import { useAuth } from '../contexts/AuthContext';
+import { getInitialRoute } from '../utils/routeUtils';
 
 export const LoginPage = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate('/agenda');
+    if (!loading && isAuthenticated && user) {
+      const initialRoute = getInitialRoute(user.role);
+      navigate(initialRoute);
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, user, navigate]);
 
   if (loading) {
     return (

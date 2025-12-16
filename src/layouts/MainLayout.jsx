@@ -18,6 +18,9 @@ import {
   SunIcon,
   MoonIcon,
   Bars3Icon,
+  ChatBubbleLeftRightIcon,
+  UserPlusIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 export const MainLayout = ({ children }) => {
@@ -29,11 +32,41 @@ export const MainLayout = ({ children }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showReturnsCenter, setShowReturnsCenter] = useState(false);
 
-  const menuItems = [
-    { path: '/agenda', label: 'Agenda', icon: CalendarDaysIcon },
-    { path: '/pacientes', label: 'Pacientes', icon: UsersIcon },
-    { path: '/financeiro', label: 'Financeiro', icon: CurrencyDollarIcon },
-  ];
+  // Definir menus baseado no role do usuário
+  const getMenuItems = () => {
+    const role = user?.role;
+    
+    // Administrador: Cadastro de Suporte e Lista de Usuários
+    if (role === 'admin') {
+      return [
+        { path: '/cadastro-suporte', label: 'Cadastrar Suporte', icon: UserPlusIcon },
+        { path: '/lista-usuarios', label: 'Lista de Usuários', icon: UserGroupIcon },
+      ];
+    }
+    
+    // Suporte: Mensagens
+    if (role === 'suporte') {
+      return [
+        { path: '/mensagens', label: 'Mensagens', icon: ChatBubbleLeftRightIcon },
+      ];
+    }
+    
+    // Usuário padrão e Profissionais: Agenda, Pacientes, Financeiro
+    if (role === 'user' || role === 'profissional') {
+      return [
+        { path: '/agenda', label: 'Agenda', icon: CalendarDaysIcon },
+        { path: '/pacientes', label: 'Pacientes', icon: UsersIcon },
+        { path: '/financeiro', label: 'Financeiro', icon: CurrencyDollarIcon },
+      ];
+    }
+    
+    // Fallback: se não tiver role definido, mostrar agenda
+    return [
+      { path: '/agenda', label: 'Agenda', icon: CalendarDaysIcon },
+    ];
+  };
+
+  const menuItems = getMenuItems();
 
   const handleLogout = () => {
     logout();
@@ -54,9 +87,7 @@ export const MainLayout = ({ children }) => {
               <Bars3Icon className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
             </button>
             
-            <Link to="/agenda" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#2575fc] rounded-lg flex items-center justify-center">
-              </div>
+            <Link to={menuItems.length > 0 ? menuItems[0].path : '/agenda'} className="flex items-center gap-2">
               <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
                 Esmile
               </span>
@@ -166,8 +197,8 @@ export const MainLayout = ({ children }) => {
         {children}
       </main>
 
-      {/* Live Chat */}
-      <LiveChat />
+      {/* Live Chat - Não mostrar na página de mensagens */}
+      {location.pathname !== '/mensagens' && <LiveChat />}
 
       {/* Central de Retornos */}
       <ReturnsCenter 

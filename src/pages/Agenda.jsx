@@ -539,7 +539,7 @@ export const AgendaPage = () => {
     return (
         <div 
           ref={cardRef}
-          className={`fixed z-[100] w-80 rounded-xl shadow-2xl border animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          className={`fixed z-[100] w-90 rounded-xl shadow-2xl border animate-in fade-in zoom-in-95 duration-200 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
           style={{ 
             left: `${Math.min(position.x, window.innerWidth - 340)}px`, 
             top: `${Math.min(Math.max(position.y, 100), window.innerHeight - 300)}px`,

@@ -7,4 +7,6 @@ export const API_ENDPOINTS = {
   pacientes: `${API_BASE_URL}/pacientes`,
   professionals: `${API_BASE_URL}/professionals`,
   retornos: `${API_BASE_URL}/retornos`,
+  mensagens: `${API_BASE_URL}/mensagens`,
+  suporteUsuarios: `${API_BASE_URL}/suporte-usuarios`,
 };
