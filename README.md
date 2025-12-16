@@ -62,9 +62,12 @@ src/
 ├── contexts/          # Contextos (Theme, Auth, etc.)
 ├── pages/             # Páginas principais
 ├── services/          # Serviços de API
-│   ├── api.js
 │   ├── agendaService.js
-│   └── pacientesService.js
+│   ├── api.js
+│   ├── authService.js
+│   ├── pacientesService.js
+│   ├── professionalsService.js
+│   └── retornosService.js
 └── config/            # Configurações
     └── api.js
 ```
